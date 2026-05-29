@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
-import { createCategories } from './createCategories';
-import { CATEGORIES } from './data';
+import { CATEGORIES, TEST_CATEGORIES } from './data';
+import { setUpCategories } from './setUpCategories';
 
 async function main() {
 	if (!process.env.COOKIE_HEADER) {
@@ -17,10 +17,7 @@ async function main() {
 		process.exit(1);
 	}
 
-	await createCategories(
-		CATEGORIES,
-		`${process.env.DISCOURSE_URL!}/categories`,
-	);
+	await setUpCategories(CATEGORIES);
 }
 
 void main();
