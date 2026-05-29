@@ -14,7 +14,17 @@ const SLUGS = {
 	random: 'random',
 };
 
-// All properties of a category are inherited by its children except for name
+/**
+ * These properties are inherited by subcategories:
+ * - styleType
+ * - emoji
+ * - color
+ * - permissions
+ * - customFields
+ *
+ * To give a parent category's subcategories different properties to the parent
+ * category itself, use the subcategorySettings property
+ */
 
 const LECTURES_CATEGORY: DiscourseCategory = {
 	name: 'Lectures',
