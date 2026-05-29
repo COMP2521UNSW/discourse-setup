@@ -2,11 +2,11 @@
 
 This repo contains a script for setting up the COMP2521 Discourse forum.
 
-The script creates categories and sets their descriptions and permissions.
+The script creates categories and configures their descriptions and permissions.
 
 Possible extensions include:
 
-- Setting templates
+- Configuring templates
 - Configuring other settings
 
 ## How to Use
