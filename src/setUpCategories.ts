@@ -28,27 +28,20 @@ async function doCreateCategories(
 ) {
 	const categoryId = await createCategory(category, parentCategoryId);
 
-	const inheritableSettings = {
-		...(category.color ? { color: category.color } : {}),
-		...(category.permissions ? { permissions: category.permissions } : {}),
-		...(category.customFields ? { customFields: category.customFields } : {}),
-		...(category.styleType ? { styleType: category.styleType } : {}),
-		...(category.emoji ? { emoji: category.emoji } : {}),
+	const inheritedSettings = {
+		styleType: category.styleType,
+		emoji: category.emoji,
+		color: category.color,
+		permissions: category.permissions,
+		customFields: category.customFields,
 	};
+	Object.assign(inheritedSettings, category.subcategorySettings);
 
 	if (category.subcategories) {
-		const subcategorySettings = {
-			...inheritableSettings,
-			...category.subcategorySettings,
-		};
 		for (const subcategory of category.subcategories) {
-			await doCreateCategories(
-				{
-					...subcategorySettings,
-					...subcategory,
-				},
-				categoryId,
-			);
+			const settings = Object.assign({}, inheritedSettings, subcategory);
+			Object.assign(subcategory, settings);
+			await doCreateCategories(subcategory, categoryId);
 		}
 	}
 }
@@ -61,18 +54,16 @@ async function createCategory(
 
 	const requestBody = {
 		name: category.name,
-		...(category.slug ? { slug: category.slug } : {}),
-		...(parentCategoryId ? { parent_category_id: parentCategoryId } : {}),
-		...(category.styleType ? { style_type: category.styleType } : {}),
+		slug: category.slug,
+		parent_category_id: parentCategoryId,
+		style_type: category.styleType,
 		icon: 'square-full',
-		...(category.emoji ? { emoji: category.emoji } : {}),
-		...(category.color ? { color: category.color } : {}),
+		emoji: category.emoji,
+		color: category.color,
 		text_color: 'FFFFFF',
-		...(category.permissions ? { permissions: category.permissions } : {}),
-		...(category.readOnlyBanner
-			? { read_only_banner: category.readOnlyBanner }
-			: {}),
-		custom_fields: category.customFields ?? {},
+		permissions: category.permissions,
+		custom_fields: category.customFields,
+		read_only_banner: category.readOnlyBanner,
 		allow_badges: true,
 		category_setting_attributes: {},
 		form_template_ids: [],
@@ -81,9 +72,12 @@ async function createCategory(
 		minimum_required_tags: 0,
 		search_priority: 0,
 	};
+	const cleanRequestBody = Object.fromEntries(
+		Object.entries(requestBody).filter(([_, val]) => val !== undefined),
+	);
 
 	try {
-		const res = await api.post('/categories', requestBody);
+		const res = await api.post('/categories', cleanRequestBody);
 
 		console.log(`✅ created category '${category.name}'`);
 
@@ -102,9 +96,10 @@ async function createCategory(
 // Fake for testing
 
 let fakeCategoryId = 1;
+let fakeTopicId = 1001;
 
 async function fakeCreateCategory(
-	{ subcategories, ...category }: DiscourseCategory,
+	category: DiscourseCategory,
 	parentCategoryId?: number,
 ) {
 	const categoryId = fakeCategoryId;
@@ -112,8 +107,12 @@ async function fakeCreateCategory(
 
 	console.log(`Creating category '${category.name}'...`);
 	console.log(`ID = ${categoryId}, parent category ID = ${parentCategoryId}`);
-	console.log(category);
+	const { subcategories, ...otherProperties } = category;
+	console.log(otherProperties);
 	console.log();
+
+	category.topicId = fakeTopicId;
+	fakeTopicId++;
 
 	return categoryId;
 }
@@ -141,37 +140,39 @@ async function doEditDescriptions(category: DiscourseCategory) {
 }
 
 async function editDescription(category: DiscourseCategory) {
-	if (category.description) {
-		const topicId = category.topicId!;
+	if (!category.description) {
+		return;
+	}
 
-		let res: AxiosResponse<any, any, {}>;
-		try {
-			res = await api.get(`/t/${topicId}/1.json`);
-		} catch (err) {
-			console.log(
-				`⚠️ encountered error while getting topic for category '${category.name}'`,
-			);
-			console.log(err);
-			process.exit(1);
-		}
+	const topicId = category.topicId!;
 
-		const postId = res.data.post_stream.posts[0].id as number;
+	let res: AxiosResponse<any, any, {}>;
+	try {
+		res = await api.get(`/t/${topicId}/1.json`);
+	} catch (err) {
+		console.log(
+			`⚠️ encountered error while getting topic for category '${category.name}'`,
+		);
+		console.log(err);
+		process.exit(1);
+	}
 
-		const formData = new FormData();
-		formData.append('post[raw]', category.description);
-		formData.append('post[topic_id]', topicId.toString());
+	const postId = res.data.post_stream.posts[0].id as number;
 
-		try {
-			await api.put(`/posts/${postId}`, formData);
+	const formData = new FormData();
+	formData.append('post[raw]', category.description);
+	formData.append('post[topic_id]', topicId.toString());
 
-			console.log(`✅ edit description for category '${category.name}'`);
-		} catch (err) {
-			console.log(
-				`⚠️ encountered error while editing description for category '${category.name}'`,
-			);
-			console.log(err);
-			process.exit(1);
-		}
+	try {
+		await api.put(`/posts/${postId}`, formData);
+
+		console.log(`✅ edit description for category '${category.name}'`);
+	} catch (err) {
+		console.log(
+			`⚠️ encountered error while editing description for category '${category.name}'`,
+		);
+		console.log(err);
+		process.exit(1);
 	}
 }
 
