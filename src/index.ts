@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { CATEGORIES, TEST_CATEGORIES } from './data';
-import { setUpCategories } from './setUpCategories';
+import { createCategories } from './createCategories';
 
 async function main() {
 	if (!process.env.COOKIE_HEADER) {
@@ -17,7 +17,7 @@ async function main() {
 		process.exit(1);
 	}
 
-	await setUpCategories(CATEGORIES);
+	await createCategories(CATEGORIES);
 }
 
 void main();

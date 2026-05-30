@@ -5,14 +5,14 @@ import type { DiscourseCategory } from './types';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-async function setUpCategories(categories: DiscourseCategory[]) {
-	await createCategories(categories);
+async function createCategories(categories: DiscourseCategory[]) {
+	await createAllCategories(categories);
 	await editDescriptions(categories);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-async function createCategories(categories: DiscourseCategory[]) {
+async function createAllCategories(categories: DiscourseCategory[]) {
 	console.log(`ℹ️ creating categories`);
 
 	for (const category of categories) {
@@ -178,4 +178,4 @@ async function editDescription(category: DiscourseCategory) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { setUpCategories };
+export { createCategories };
